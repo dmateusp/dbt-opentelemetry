@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=dbt
+      - POSTGRES_USER=dbt
+      - POSTGRES_DB=dbt
+  opentelemetry-collector:
+    image: otel/opentelemetry-collector:0.30.0
+    command: --config=/etc/oopentelemetry-collector-config.yaml
+    ports:
+      - "4317:4317"
+    volumes:
+      - "./opentelemetry-collector-config.yaml:/etc/oopentelemetry-collector-config.yaml:ro"
+      - "./traces:/etc/traces"
+  jaegertracing:
+    image: jaegertracing/all-in-one:1.24
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411

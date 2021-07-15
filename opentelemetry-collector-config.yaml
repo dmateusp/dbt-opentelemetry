@@ -1,0 +1,21 @@
+receivers:
+    otlp:
+        protocols:
+            grpc:
+            http:
+exporters:
+    logging:
+        loglevel: debug
+    file:
+        path: /etc/traces/traces.json
+    jaeger:
+        endpoint: "jaegertracing:14250"
+        insecure: true
+processors:
+    batch:
+service:
+    pipelines:
+        traces:
+            receivers: [otlp]
+            exporters: [logging, file, jaeger]
+            processors: []
