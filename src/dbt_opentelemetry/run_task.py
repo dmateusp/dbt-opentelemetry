@@ -1,7 +1,11 @@
+import json
+
 import dbt.task.run
 from dbt.node_types import RunHookType
+from opentelemetry.propagators.textmap import CarrierT
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry import trace
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 import dbt_opentelemetry
 from dbt_opentelemetry import tracer
@@ -34,3 +38,13 @@ class RunTaskOpenTelemetry(original_run_task):
             finally:
                 run_end_hooks_span.set_status(Status(StatusCode.OK))
                 run_end_hooks_span.end()
+                # We write the trace context to a file
+                # so other processes (in production, Airflow for example)
+                # can add to the trace
+                propagator = TraceContextTextMapPropagator()
+                carrier: CarrierT = {}
+                propagator.inject(
+                    carrier, trace.set_span_in_context(dbt_opentelemetry.root_span)
+                )
+                with open("trace.json", "w") as file:
+                    file.write(json.dumps(carrier))
